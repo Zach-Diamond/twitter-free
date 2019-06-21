@@ -31,20 +31,25 @@ def twitter_setup():
     api = tweepy.API(auth)
     return api
 
+#twitter_name = input('Enter a valid Twitter username: ')
+twitter_name = 'realDonaldTrump'
 extractor = twitter_setup()
 
-while True:
-    try: 
-        twitter_name = input('Enter a valid Twitter username: ')
-    except: 
-        print('error')
-        continue
 
+for i in range(10): # https://stackoverflow.com/questions/2083987/how-to-retry-after-exception
+    try:
+        tweets = extractor.user_timeline(screen_name=twitter_name, count=200)
+    except:
+        twitter_name = input('User not found.Enter a valid Twitter username: ')
+    else:
+        break
+else:
+    print("No valid user names entered. Exiting program.")
 
-tweets = extractor.user_timeline(screen_name=twireatter_name, count=200)
-print("Number of tweets extracted: {}.\n".format(len(tweets)))
+# print("Number of tweets extracted: {}.\n".format(len(tweets)))
 
-print("5 recent tweets:\n")
-for tweet in tweets[:5]:
-    print(tweet.text)
-    print()
+# print("5 recent tweets:\n")
+# for tweet in tweets[:5]:
+#     print(tweet.text)
+#     print()
+
