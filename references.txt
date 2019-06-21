@@ -1,0 +1,3 @@
+INITIAL REFERENCES: 
+    API installation guide: https://www.codementor.io/ferrorodolfo/sentiment-analysis-on-trump-s-tweets-using-python-pltbvb4xr
+    Tweepy docs: https://tweepy.readthedocs.io/en/latest/getting_started.html#api

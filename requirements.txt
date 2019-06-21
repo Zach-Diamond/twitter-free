@@ -1,0 +1,8 @@
+requests
+python-dotenv
+numpy
+pandas
+tweepy
+matplotlib
+seaborn
+Textblob
