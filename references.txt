@@ -2,3 +2,4 @@ INITIAL REFERENCES:
     API installation guide: https://www.codementor.io/ferrorodolfo/sentiment-analysis-on-trump-s-tweets-using-python-pltbvb4xr
     Tweepy docs: https://tweepy.readthedocs.io/en/latest/getting_started.html#api
     function for conditional pandas df column: https://stackoverflow.com/questions/30953299/pandas-if-row-in-column-a-contains-x-write-y-to-row-in-column-b
+    Simple Natural Language Processing Tutorial: https://www.sitepoint.com/natural-language-processing-python/

@@ -9,6 +9,16 @@ import numpy as np        ###Numbers
 import requests           ###.env file 
 import csv                ###Maybe put in CSV?
 
+import nltk
+
+import string
+from nltk.tokenize import word_tokenize
+from nltk.stem.porter import PorterStemmer 
+from nltk.stem.wordnet import WordNetLemmatizer 
+from nltk.tag import pos_tag
+from nltk import FreqDist
+from nltk.corpus import stopwords
+
 load_dotenv()
 
 ###FUNCTIONS
@@ -76,6 +86,24 @@ def applyFunc(hourposted):
     else:
         return 'No Timestamp'
 
+def clean_data(tokens, stop_words = ()):  #https://www.sitepoint.com/natural-language-processing-python/
+
+    cleaned_tokens = []
+
+    for token, tag in pos_tag(tokens):
+        if tag.startswith("NN"):
+            pos = 'n'
+        elif tag.startswith('VB'):
+            pos = 'v'
+        else:
+            pos = 'a'
+
+        lemmatizer = WordNetLemmatizer()
+        token = lemmatizer.lemmatize(token, pos)
+
+        if token not in string.punctuation and token.lower() not in stop_words:
+            cleaned_tokens.append(token)
+    return cleaned_tokens
 
 
 ########SCRIPT-WIDE VARIABLES
@@ -93,6 +121,12 @@ yesterdaydate = yesterday.strftime('%Y-%m-%d')
 lastweek = date.today() - timedelta(days=7)
 lastweekdate = lastweek.strftime('%Y-%m-%d')
 
+
+###NLP TEXT CLEANUP
+lem = WordNetLemmatizer()
+stemmer = PorterStemmer()
+stop_words = stopwords.words('english')
+# Additional stop_words are appended below (after user-input) following observations
 
 
 ###RESULT LISTS
@@ -203,19 +237,26 @@ else:
     , axis='columns')
 
 #Additional columns
+#Convert tweeted_at to Eastern
+tdf['tweeted_at'] = tdf['tweeted_at'].dt.tz_localize('UTC')
+tdf['tweeted_at'] = tdf['tweeted_at'].dt.tz_convert('US/Eastern')
+# Add additional fields
 tdf['tweet_date'] = tdf['tweeted_at'].dt.date
 tdf['tweet_day'] = tdf['tweeted_at'].dt.weekday_name
 tdf['tweet_hour'] = tdf['tweeted_at'].dt.hour
 tdf['tweet_length'] = [len(tweets) for tweets in tdf['tweet']]
 tdf['tweet_timerange'] = tdf['tweet_hour']
 tdf['tweet_timerange'] = tdf['tweet_timerange'].apply(applyFunc)
-
+tdf['tweet_split'] = tdf['tweet'].str.strip('()').str.split(',')
 
 #calculations
 avg_tweet_length = np.average(tdf['tweet_length'])
 most_tweets_on = np.max(tdf['tweet_date'])
 number_max_tweets = len(tdf.loc[(tdf['tweet_date']==np.max(tdf['tweet_date'])),:])
-percent_capslock = "{:.1f}".format(sum(map(str.isupper,str([i for i in tdf['tweet']]).split()))/len(str([i for i in tdf['tweet']]).split())*100)
+try: 
+    percent_capslock = "{:.1f}".format(sum(map(str.isupper,str([i for i in tdf['tweet']]).split()))/len(str([i for i in tdf['tweet']]).split())*100)
+except:
+    percent_capsolock = "N/A"
 fully_capslock_tweet = sum([i.isupper() for i in tdf['tweet']])
 
 #Date Diff
@@ -237,14 +278,57 @@ table_most_frequent_day = tdf.groupby(['tweet_day'], as_index=False).agg({
     "likes":np.sum,
     "retweet_count":np.sum
     }).sort_values('id',ascending=False).rename({'id':'count'},axis='columns')
-    
 most_frequent_day = table_most_frequent_day[:1]['tweet_day'].values[0]
+
+table_most_frequent_hour = tdf.groupby(['tweet_timerange'], as_index=False).agg({
+    "id":np.count_nonzero,
+    }).sort_values('id',ascending=False).rename({'id':'count'},axis='columns')
+most_frequent_hour = table_most_frequent_hour[:1]['tweet_timerange'].values[0]
+
+#ThisWeek Dataframe
+thisweek_tdf = tdf.loc[(tdf['tweeted_at']<=todaydate) & (tdf['tweeted_at']>=lastweekdate),:]
+
+#Text of all tweets
+text = ' '.join(tdf['tweet'].tolist()).lower()
+
+#Text of this week tweets
+thisweek_text = ' '.join(thisweek_tdf['tweet'].tolist()).lower()
+
+####NLP ADDITIONAL WORDS AND CLEANING
+
+#Append more stop_words for distribution
+stop_words.append("...")    
+stop_words.append("http")
+stop_words.append("'")
+stop_words.append("...")
+stop_words.append('"')
+stop_words.append('"')
+stop_words.append("rt")
+stop_words.append("amp")
+stop_words.append('”')
+stop_words.append('“')
+stop_words.append("'s")
+stop_words.append("''")
+stop_words.append("n't")
+stop_words.append('n"t')
+stop_words.append('’')
+stop_words.append('')
+stop_words.append('``')
+stop_words.append(f"{selected_name.lower()}")
+
+#NLP Cleaning
+tokens = word_tokenize(text)
+cleaned_tokens = clean_data(tokens, stop_words = stop_words)
+freq_dist = FreqDist(cleaned_tokens)
+top_twenty_words = pd.DataFrame(freq_dist.most_common(20)).rename({0:'word',1:'count'},axis='columns')
+
 
 #append a hashtag if source = hashtag
 if source == 'hashtag':
     selected_name = '#'+selected_name
 
 ### {# of tweets extracted -> from X to Y [Z Days]}
+print(f"{len(thisweek_tdf)} Tweets this week")
 print(f'Data from {first_tweet} to {last_tweet} ({delta} days).')
 print()
 print('-----------------------------------')
@@ -252,13 +336,13 @@ print('-----------------------------------')
 
 ####RESULTS
 print(f'Average Tweet length: {"{:.1f}".format(avg_tweet_length)} characters.')
+try:
+    print(f"Average Tweets Per Day: {'{:.1f}'.format(len(tdf)/delta)}.")
+except:
+    pass
 print(f'Most Tweets on: {most_tweets_on} for a total of {number_max_tweets} tweets.')
 print(f'Most retweeted: "{retweet_most_tweet}" with {retweet_most_retweets} retweets (posted on {retweet_most_date}).')
 print(f'Most liked: "{likes_most_tweet}" with {likes_most_retweets} likes (posted on {likes_most_date}).')
-
-print('-----------------------------------')
-print(f"{fully_capslock_tweet} of {selected_name} {len(tdf)} Tweets were written entirely in ALL CAPS!")
-print(f"{percent_capslock}% of {selected_name}'s individual words were ALL CAPS!")
 
 print('-----------------------------------')
 print("Primary source of tweets:")
@@ -267,3 +351,43 @@ print(tdf.groupby(['source'],as_index=False)[['id']].count().sort_values('id',as
 print('-----------------------------------')
 print(f"{most_frequent_day} is {selected_name}'s most frequent day for Tweets.")
 print(table_most_frequent_day.to_string(index=False)) ## Remove to_string for DF
+
+print('-----------------------------------')
+print(f"{most_frequent_hour} is {selected_name}'s most frequent time to Tweet.")
+print(f"{len(tdf.loc[(tdf['tweet_hour']>=0) & (tdf['tweet_hour']<5),:][['id']])/len(tdf)*100}% of {selected_name} Tweets happen from 12am-4am EST.")
+print(table_most_frequent_hour.to_string(index=False)) ## Remove to_string for DF
+
+print('-----------------------------------')
+print(f"{fully_capslock_tweet} of {selected_name} {len(tdf)} Tweets were written entirely in ALL CAPS!")
+print(f"{percent_capslock}% of {selected_name}'s individual words were ALL CAPS!")
+print(f"This week, there were {sum(tdf.tweet.str.count('!'))} Tweets with one excalmation mark! {sum(tdf.tweet.str.count('!!'))} with two!! Exciting!!!")
+print(f"{selected_name} Top 20 Words by Usage:")
+print(top_twenty_words)
+
+# BAR OF TOP 20
+
+# import matplotlib.pyplot as plt
+# import statsmodels.formula.api as smf
+# fig, ax = plt.subplots()
+# top_twenty_words.groupby(['word'])[['count']].sum().sort_values(['count'],ascending=False).plot(kind='bar', 
+#                   ax=ax, 
+#                   figsize=(15,8), 
+#                   color=['mediumblue','red','pink'],
+#                   alpha=.8
+#                  #ylim=(200,600)                            
+#                  )
+
+# ax.set_title(f'{selected_name}: Top 20 Words by Frequency',
+#              size=20)
+# # #ax.get_children()[list(ytcatcount.index).index('Entertainment')].set_color('dimgrey')
+
+# # Tufte-like axes
+# ax.spines['left'].set_position(('outward', 10))
+# ax.spines['bottom'].set_position(('outward', 10))
+# ax.spines['right'].set_visible(False)
+# ax.spines['top'].set_visible(False)
+# ax.yaxis.set_ticks_position('left')
+# ax.xaxis.set_ticks_position('bottom')
+# ax.set_ylabel('Count',size=10)
+# ax.set_xlabel('Word',size=10)
+# plt.xticks(rotation=90)
