@@ -193,7 +193,7 @@ else:
 
     for i in range(10): #Allow 10 retries
         try:
-           tweets = tweepy.Cursor(api.search, q=f'{selected_name} -filter:retweets', tweet_mode='extended', lang='en').items(200)
+           tweets = tweepy.Cursor(api.search, q=f'{selected_name} -filter:retweets', tweet_mode='extended', lang='en').items(500)
         except:
             selected_name = input('Hashtag not found. Please Enter a valid hashtag: ')
         else:
@@ -323,6 +323,7 @@ stop_words = stop_words+other_stop_words
 tokens = word_tokenize(text)
 cleaned_tokens = clean_data(tokens, stop_words = stop_words)
 freq_dist = FreqDist(cleaned_tokens)
+top_ten_words = pd.DataFrame(freq_dist.most_common(10)).rename({0:'word',1:'count'},axis='columns')
 top_twenty_words = pd.DataFrame(freq_dist.most_common(10)).rename({0:'word',1:'count'},axis='columns')
 cleaned_text = ' '.join(cleaned_tokens).lower()
 
@@ -407,7 +408,7 @@ print(f"Individual words written in ALL CAPS: {percent_capslock}%")
 print(f"Tweets with one excalamation mark: {sum(tdf.tweet.str.count('!'))}! Tweets with two exclamation marks: {sum(tdf.tweet.str.count('!!'))}!!  Exciting!!!")
 print(f"Top 10 Words by Frequency for {selected_name}:")
 print("")
-print(top_twenty_words.to_string(index=False))
+print(top_ten_words.to_string(index=False))
 print("")
 print('-----------------------------------')
 print('-----------------------------------')
@@ -415,18 +416,16 @@ print("")
 print(f"{selected_name.upper()} TWEETS ARE GENERALLY{tdf_sentiments['sentiment_type'][:1].to_string(index=False).upper()} ({percent_top_sentiment}%).")
 print("")
 print(tdf_sentiments.to_string(index=False).upper())
+print("")
 print('-----------------------------------')
 print('-----------------------------------')
 
 
 # ## BAR OF TOP 20
-
-# import matplotlib.pyplot as plt
-# import statsmodels.formula.api as smf
 # fig, ax = plt.subplots()
 # top_twenty_words.groupby(['word'])[['count']].sum().sort_values(['count'],ascending=False).plot(kind='bar', 
 #                   ax=ax, 
-#                   figsize=(13,6), 
+#                   figsize=(10,6), 
 #                   color=['mediumblue','red','pink'],
 #                   alpha=.8
 #                  #ylim=(200,600)                            
@@ -443,12 +442,14 @@ print('-----------------------------------')
 # ax.spines['top'].set_visible(False)
 # ax.yaxis.set_ticks_position('left')
 # ax.xaxis.set_ticks_position('bottom')
-# ax.set_ylabel('Count',size=10)
-# ax.set_xlabel('Word',size=10)
-# plt.xticks(rotation=90)
+# #ax.set_xlabel('Word Used',size=15) #Disabled
+# plt.yticks(fontsize=14)
+# plt.xticks(rotation=90,fontsize=14)
+#plt.grid(alpha=.4)
+# plt.show()
 
 
-# ##WORDCLOUD
+# ##WORDCLOUD https://python-graph-gallery.com/260-basic-wordcloud/
 # wordcloud = WordCloud(width=1000, height=1000, margin=0).generate(cleaned_text)
  
 # # Display the generated image:
@@ -458,5 +459,27 @@ print('-----------------------------------')
 # plt.margins(x=0, y=0)
 # plt.show()
 
-# ##Sentiment Plot
-# tdf_cleaned_string_desc.groupby(['sentiment_type'],as_index=True)['sentence'].count().plot(kind='bar');
+# ## BAR OF SENTIMENTS
+# fig, ax = plt.subplots()
+# tdf_cleaned_string_desc.groupby(['sentiment_type'],as_index=True)['sentence'].count().plot(kind='barh', 
+#                   ax=ax,
+#                   figsize=(10,6), 
+#                   color=['darkred','black','darkblue'],
+#                   alpha=.8
+#                  #ylim=(200,600)                            
+#                  )
+
+# ax.set_title(f'{selected_name}: Count of Tweet Sentiments',
+#              size=20)
+
+# ax.spines['left'].set_position(('outward', 10))
+# ax.spines['bottom'].set_position(('outward', 10))
+# ax.spines['right'].set_visible(False)
+# ax.spines['top'].set_visible(False)
+# ax.yaxis.set_ticks_position('left')
+# ax.xaxis.set_ticks_position('bottom')
+# ax.set_ylabel('Sentiment',size=12)
+# plt.yticks(fontsize=13)
+# plt.xticks(rotation=90,fontsize=12)
+# plt.grid(alpha=.35)
+# plt.show()
