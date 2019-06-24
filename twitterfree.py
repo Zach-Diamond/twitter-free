@@ -9,8 +9,8 @@ import numpy as np        ###Numbers
 import requests           ###.env file 
 import csv                ###Maybe put in CSV?
 
-import nltk
-
+import matplotlib.pyplot as plt  #plotting
+import nltk                      #NLP
 import string
 from nltk.tokenize import word_tokenize
 from nltk.stem.porter import PorterStemmer 
@@ -18,6 +18,7 @@ from nltk.stem.wordnet import WordNetLemmatizer
 from nltk.tag import pos_tag
 from nltk import FreqDist
 from nltk.corpus import stopwords
+from wordcloud import wordcloud
 
 load_dotenv()
 
@@ -101,7 +102,7 @@ def clean_data(tokens, stop_words = ()):  #https://www.sitepoint.com/natural-lan
         lemmatizer = WordNetLemmatizer()
         token = lemmatizer.lemmatize(token, pos)
 
-        if token not in string.punctuation and token.lower() not in stop_words:
+        if token not in string.punctuation and token.lower() not in stop_words and "//" not in token.lower():
             cleaned_tokens.append(token)
     return cleaned_tokens
 
@@ -115,7 +116,7 @@ ACCESS_TOKEN = os.environ.get("ACCESS_TOKEN")
 ACCESS_SECRET = os.environ.get("ACCESS_SECRET")
 
 ###DATE VARIABLES
-todaydate = datetime.now().strftime('%Y-%m-%d')
+todaydate = datetime.today().strftime('%Y-%m-%d 11:59:59')
 yesterday = date.today() - timedelta(days=1)
 yesterdaydate = yesterday.strftime('%Y-%m-%d')
 lastweek = date.today() - timedelta(days=7)
@@ -141,8 +142,6 @@ print('-----------------------------------')
 print('INITIATING SUPER ADVANCED TWITTER BOT...')
 print('...CALCULATING...')
 print('...PERFORMING BASIC ADDITION...')
-print('...7+3= UNKNOWN...')
-print('...9--NO, WAIT, 10...')
 print('...CONFIGURING...')
 print('...LEARNING SPANISH...')
 print('---- CONFIGURATION COMPLETE ----')
@@ -160,8 +159,8 @@ else:
 ########## USERS ############
 if source == 'user':
     #####USER INPUT FOR TWITTER NAME
-    #selected_name = input('Please enter a valid Twitter username: ')
-    selected_name = 'realDonaldTrump'
+    selected_name = input('Please enter a valid Twitter username: ')
+    #selected_name = 'realDonaldTrump'
 
     for i in range(10): # https://stackoverflow.com/questions/2083987/how-to-retry-after-exception
         try:
@@ -247,7 +246,7 @@ tdf['tweet_hour'] = tdf['tweeted_at'].dt.hour
 tdf['tweet_length'] = [len(tweets) for tweets in tdf['tweet']]
 tdf['tweet_timerange'] = tdf['tweet_hour']
 tdf['tweet_timerange'] = tdf['tweet_timerange'].apply(applyFunc)
-tdf['tweet_split'] = tdf['tweet'].str.strip('()').str.split(',')
+#tdf['tweet_split'] = tdf['tweet'].str.strip('()').str.split(',')
 
 #calculations
 avg_tweet_length = np.average(tdf['tweet_length'])
@@ -297,31 +296,16 @@ thisweek_text = ' '.join(thisweek_tdf['tweet'].tolist()).lower()
 ####NLP ADDITIONAL WORDS AND CLEANING
 
 #Append more stop_words for distribution
-stop_words.append("...")    
-stop_words.append("http")
-stop_words.append("'")
-stop_words.append("...")
-stop_words.append('"')
-stop_words.append('"')
-stop_words.append("rt")
-stop_words.append("amp")
-stop_words.append('”')
-stop_words.append('“')
-stop_words.append("'s")
-stop_words.append("''")
-stop_words.append("n't")
-stop_words.append('n"t')
-stop_words.append('’')
-stop_words.append('')
-stop_words.append('``')
 stop_words.append(f"{selected_name.lower()}")
+other_stop_words = ['rt',"..." , "http", "'", "...", '"' '"' "rt", "amp", '”', '“', "'s", "''", "n't", 'n"t', '’', '', '``', "get", "go", "https", "''",'co','.co','co','‘','//t.co/']
+stop_words = stop_words+other_stop_words
 
 #NLP Cleaning
 tokens = word_tokenize(text)
 cleaned_tokens = clean_data(tokens, stop_words = stop_words)
 freq_dist = FreqDist(cleaned_tokens)
-top_twenty_words = pd.DataFrame(freq_dist.most_common(20)).rename({0:'word',1:'count'},axis='columns')
-
+top_twenty_words = pd.DataFrame(freq_dist.most_common(10)).rename({0:'word',1:'count'},axis='columns')
+cleaned_text = ' '.join(cleaned_tokens).lower()
 
 #append a hashtag if source = hashtag
 if source == 'hashtag':
@@ -330,9 +314,10 @@ if source == 'hashtag':
 ### {# of tweets extracted -> from X to Y [Z Days]}
 print(f"{len(thisweek_tdf)} Tweets this week")
 print(f'Data from {first_tweet} to {last_tweet} ({delta} days).')
-print()
+print("")
 print('-----------------------------------')
 print('-----------------------------------')
+print("")
 
 ####RESULTS
 print(f'Average Tweet length: {"{:.1f}".format(avg_tweet_length)} characters.')
@@ -343,26 +328,34 @@ except:
 print(f'Most Tweets on: {most_tweets_on} for a total of {number_max_tweets} tweets.')
 print(f'Most retweeted: "{retweet_most_tweet}" with {retweet_most_retweets} retweets (posted on {retweet_most_date}).')
 print(f'Most liked: "{likes_most_tweet}" with {likes_most_retweets} likes (posted on {likes_most_date}).')
-
+print("")
 print('-----------------------------------')
+
+print("")
 print("Primary source of tweets:")
 print(tdf.groupby(['source'],as_index=False)[['id']].count().sort_values('id',ascending=False).rename({'id':'count'},axis='columns').to_string(index=False)) ## Remove to_string for DF
-
+print("")
 print('-----------------------------------')
-print(f"{most_frequent_day} is {selected_name}'s most frequent day for Tweets.")
+
+print("")
+print(f"Most Frequent Day to Tweet: {most_frequent_day}")
 print(table_most_frequent_day.to_string(index=False)) ## Remove to_string for DF
-
+print("")
 print('-----------------------------------')
-print(f"{most_frequent_hour} is {selected_name}'s most frequent time to Tweet.")
-print(f"{len(tdf.loc[(tdf['tweet_hour']>=0) & (tdf['tweet_hour']<5),:][['id']])/len(tdf)*100}% of {selected_name} Tweets happen from 12am-4am EST.")
+
+print("")
+print(f"Most Frequent Time of Day to Tweet: {most_frequent_hour}")
 print(table_most_frequent_hour.to_string(index=False)) ## Remove to_string for DF
-
+print(f"{len(tdf.loc[(tdf['tweet_hour']>=0) & (tdf['tweet_hour']<5),:][['id']])/len(tdf)*100}% of {selected_name} Tweets happen from 12am-4am EST.")
+print("")
 print('-----------------------------------')
-print(f"{fully_capslock_tweet} of {selected_name} {len(tdf)} Tweets were written entirely in ALL CAPS!")
-print(f"{percent_capslock}% of {selected_name}'s individual words were ALL CAPS!")
-print(f"This week, there were {sum(tdf.tweet.str.count('!'))} Tweets with one excalmation mark! {sum(tdf.tweet.str.count('!!'))} with two!! Exciting!!!")
-print(f"{selected_name} Top 20 Words by Usage:")
-print(top_twenty_words)
+
+print("")
+print(f"Tweets written entirely in ALL CAPS: {fully_capslock_tweet} of {len(tdf)}")
+print(f"Individual words written in ALL CAPS: {percent_capslock}%")
+print(f"Tweets with one excalamation mark: {sum(tdf.tweet.str.count('!'))}! Tweets with two exclamation marks: {sum(tdf.tweet.str.count('!!'))}!!  Exciting!!!")
+print(f"Top 10 Words by Frequency for {selected_name}:")
+print(top_twenty_words.to_string(index=False))
 
 # BAR OF TOP 20
 
@@ -391,3 +384,14 @@ print(top_twenty_words)
 # ax.set_ylabel('Count',size=10)
 # ax.set_xlabel('Word',size=10)
 # plt.xticks(rotation=90)
+
+
+##WORDCLOUD
+# wordcloud = WordCloud(width=1000, height=1000, margin=0).generate(cleaned_text)
+ 
+# # Display the generated image:
+# plt.figure( figsize=(20,10) )
+# plt.imshow(wordcloud, interpolation='bilinear')
+# plt.axis("off")
+# plt.margins(x=0, y=0)
+# plt.show()
