@@ -18,7 +18,10 @@ from nltk.stem.wordnet import WordNetLemmatizer
 from nltk.tag import pos_tag
 from nltk import FreqDist
 from nltk.corpus import stopwords
-from wordcloud import wordcloud
+from wordcloud import WordCloud
+from textblob import TextBlob
+import re
+
 
 load_dotenv()
 
@@ -107,6 +110,7 @@ def clean_data(tokens, stop_words = ()):  #https://www.sitepoint.com/natural-lan
     return cleaned_tokens
 
 
+
 ########SCRIPT-WIDE VARIABLES
 
 ##SECRET KEYS (.env)
@@ -116,7 +120,7 @@ ACCESS_TOKEN = os.environ.get("ACCESS_TOKEN")
 ACCESS_SECRET = os.environ.get("ACCESS_SECRET")
 
 ###DATE VARIABLES
-todaydate = datetime.today().strftime('%Y-%m-%d 11:59:59')
+todaydate = datetime.today().strftime('%Y-%m-%d')
 yesterday = date.today() - timedelta(days=1)
 yesterdaydate = yesterday.strftime('%Y-%m-%d')
 lastweek = date.today() - timedelta(days=7)
@@ -208,8 +212,19 @@ else:
 
 
 #CREATING DATAFRAME
-tdf = pd.DataFrame(results)
+try: 
+    tdf = pd.DataFrame(results)
+except: 
+    print('API Error: Only 1 result returned. Please re-run the program.')
+    quit()
+
+if len(tdf)<3:
+    print('API Error: Only 1 result returned. Please re-run the program.')
+    quit()
+
+
 print("Number of tweets extracted: {}.\n".format(len(tdf)))
+
 
 ###ADDING COLUMNS FROM TWITTER DATA
 if source == 'user':
@@ -247,6 +262,10 @@ tdf['tweet_length'] = [len(tweets) for tweets in tdf['tweet']]
 tdf['tweet_timerange'] = tdf['tweet_hour']
 tdf['tweet_timerange'] = tdf['tweet_timerange'].apply(applyFunc)
 #tdf['tweet_split'] = tdf['tweet'].str.strip('()').str.split(',')
+tdf['tokenized_tweets'] = tdf.apply(lambda row: word_tokenize(row['tweet']), axis=1) #tokenized tweets
+tdf['cleaned_tweets'] = tdf.apply(lambda row: clean_data(row['tokenized_tweets'],stop_words=stop_words), axis=1) #cleanedtweets
+tdf['cleaned_tweets'] = tdf['cleaned_tweets'].apply(', '.join)
+
 
 #calculations
 avg_tweet_length = np.average(tdf['tweet_length'])
@@ -307,12 +326,42 @@ freq_dist = FreqDist(cleaned_tokens)
 top_twenty_words = pd.DataFrame(freq_dist.most_common(10)).rename({0:'word',1:'count'},axis='columns')
 cleaned_text = ' '.join(cleaned_tokens).lower()
 
+
+#sentiment analysis #https://www.kaggle.com/ankkur13/sentiment-analysis-nlp-wordcloud-textblob
+bloblist_desc = list()
+
+tdf_cleaned_string=tdf['cleaned_tweets']
+for row in tdf_cleaned_string:
+    blob = TextBlob(row)
+    bloblist_desc.append((row,blob.sentiment.polarity, blob.sentiment.subjectivity))
+    tdf_cleaned_string_desc = pd.DataFrame(bloblist_desc, columns = ['sentence','sentiment','polarity'])
+ 
+def f(tdf_cleaned_string_desc):
+    if tdf_cleaned_string_desc['sentiment'] > 0:
+        val = "Positive"
+    elif tdf_cleaned_string_desc['sentiment'] == 0:
+        val = "Neutral"
+    else:
+        val = "Negative"
+    return val
+
+tdf_cleaned_string_desc['sentiment_type'] = tdf_cleaned_string_desc.apply(f, axis=1)
+tdf_sentiments = tdf_cleaned_string_desc.groupby(['sentiment_type'],as_index=False)['sentence'].count()
+tdf_sentiments = tdf_sentiments.rename({'sentence':'count'},axis='columns').sort_values('count',ascending=False).reset_index(drop=True)
+try: 
+    to_val = tdf_sentiments['count'][:1]/np.sum(tdf_sentiments['count'])*100
+    percent_top_sentiment = "{:.1f}".format(to_val.values[0])
+except: 
+    percent_top_sentiment = 'N/A'
+
+
 #append a hashtag if source = hashtag
 if source == 'hashtag':
     selected_name = '#'+selected_name
 
 ### {# of tweets extracted -> from X to Y [Z Days]}
-print(f"{len(thisweek_tdf)} Tweets this week")
+if len(thisweek_tdf) > 1:
+    print(f"{len(thisweek_tdf)} Tweets this week")
 print(f'Data from {first_tweet} to {last_tweet} ({delta} days).')
 print("")
 print('-----------------------------------')
@@ -339,14 +388,16 @@ print('-----------------------------------')
 
 print("")
 print(f"Most Frequent Day to Tweet: {most_frequent_day}")
+print("")
 print(table_most_frequent_day.to_string(index=False)) ## Remove to_string for DF
 print("")
 print('-----------------------------------')
 
 print("")
 print(f"Most Frequent Time of Day to Tweet: {most_frequent_hour}")
-print(table_most_frequent_hour.to_string(index=False)) ## Remove to_string for DF
 print(f"{len(tdf.loc[(tdf['tweet_hour']>=0) & (tdf['tweet_hour']<5),:][['id']])/len(tdf)*100}% of {selected_name} Tweets happen from 12am-4am EST.")
+print("")
+print(table_most_frequent_hour.to_string(index=False)) ## Remove to_string for DF
 print("")
 print('-----------------------------------')
 
@@ -355,16 +406,27 @@ print(f"Tweets written entirely in ALL CAPS: {fully_capslock_tweet} of {len(tdf)
 print(f"Individual words written in ALL CAPS: {percent_capslock}%")
 print(f"Tweets with one excalamation mark: {sum(tdf.tweet.str.count('!'))}! Tweets with two exclamation marks: {sum(tdf.tweet.str.count('!!'))}!!  Exciting!!!")
 print(f"Top 10 Words by Frequency for {selected_name}:")
+print("")
 print(top_twenty_words.to_string(index=False))
+print("")
+print('-----------------------------------')
+print('-----------------------------------')
+print("")
+print(f"{selected_name.upper()} TWEETS ARE GENERALLY{tdf_sentiments['sentiment_type'][:1].to_string(index=False).upper()} ({percent_top_sentiment}%).")
+print("")
+print(tdf_sentiments.to_string(index=False).upper())
+print('-----------------------------------')
+print('-----------------------------------')
 
-# BAR OF TOP 20
+
+# ## BAR OF TOP 20
 
 # import matplotlib.pyplot as plt
 # import statsmodels.formula.api as smf
 # fig, ax = plt.subplots()
 # top_twenty_words.groupby(['word'])[['count']].sum().sort_values(['count'],ascending=False).plot(kind='bar', 
 #                   ax=ax, 
-#                   figsize=(15,8), 
+#                   figsize=(13,6), 
 #                   color=['mediumblue','red','pink'],
 #                   alpha=.8
 #                  #ylim=(200,600)                            
@@ -386,7 +448,7 @@ print(top_twenty_words.to_string(index=False))
 # plt.xticks(rotation=90)
 
 
-##WORDCLOUD
+# ##WORDCLOUD
 # wordcloud = WordCloud(width=1000, height=1000, margin=0).generate(cleaned_text)
  
 # # Display the generated image:
@@ -395,3 +457,6 @@ print(top_twenty_words.to_string(index=False))
 # plt.axis("off")
 # plt.margins(x=0, y=0)
 # plt.show()
+
+# ##Sentiment Plot
+# tdf_cleaned_string_desc.groupby(['sentiment_type'],as_index=True)['sentence'].count().plot(kind='bar');
