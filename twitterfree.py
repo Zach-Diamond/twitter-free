@@ -13,6 +13,9 @@ import xlsxwriter                                   ###Writing mutli-page Excel 
 import matplotlib.pyplot as plt                     #Plotting
 import nltk                                         #Cleanup of Tweets and beginning NLP
 import string                                       #Punctuatoin
+from nltk.corpus import twitter_samples             ###For training wordblob vs. Twitter
+from textblob.classifiers import NaiveBayesClassifier ### Classifier
+from random import shuffle                          ### To Shuffle tweet tests
 from nltk.tokenize import word_tokenize             #Cleanup of Tweets
 from nltk.stem.porter import PorterStemmer          #Cleanup of Tweets
 from nltk.stem.wordnet import WordNetLemmatizer     #Cleanup of Tweets
@@ -210,6 +213,63 @@ else:
         tweet.favorited,tweet.favorite_count,tweet.created_at]))
         #print(tweet.full_text)
 
+        
+        
+##########TRAINING & TESTING TWITTER DATA##########
+print('-----------------------------------')
+
+try: #will try to print the accuracy variable. If fails, forces training. If succeeds, allows you to choose not to retrain.
+    accuracy
+    choose_train = input('To retrain Twitter Classifier (~30s), enter YES: ').lower() 
+
+    if choose_train == 'yes':
+        print("Testing and Training Classifier. This may take up to 30 seconds...")
+        pos_tweets = twitter_samples.strings('positive_tweets.json') #Sample positive Tweets
+        neg_tweets = twitter_samples.strings('negative_tweets.json') #Sample negative tweets
+
+        pos_tweets_set = [] #creating "tweet, pos/neg" sets for training
+        for tweet in pos_tweets:
+            pos_tweets_set.append((tweet, 'pos'))
+
+        neg_tweets_set = []
+        for tweet in neg_tweets:
+            neg_tweets_set.append((tweet, 'neg'))
+
+        shuffle(pos_tweets_set)
+        shuffle(neg_tweets_set)
+
+        test_set = pos_tweets_set[:200] + neg_tweets_set[:200]   #Test vs. 300 tweets (400)
+        train_set = pos_tweets_set[200:600] + neg_tweets_set[200:600] #Train vs. 500 tweets (800)
+
+        classifier = NaiveBayesClassifier(train_set)
+        accuracy = classifier.accuracy(test_set)
+        print('Training complete.')
+        print("")
+
+except:
+    print("Testing and Training Classifier. This may take up to 30 seconds...")
+    pos_tweets = twitter_samples.strings('positive_tweets.json') #Sample positive Tweets
+    neg_tweets = twitter_samples.strings('negative_tweets.json') #Sample negative tweets
+
+    pos_tweets_set = [] #creating "tweet, pos/neg" sets for training
+    for tweet in pos_tweets:
+        pos_tweets_set.append((tweet, 'pos'))
+
+    neg_tweets_set = []
+    for tweet in neg_tweets:
+        neg_tweets_set.append((tweet, 'neg'))
+
+    shuffle(pos_tweets_set)
+    shuffle(neg_tweets_set)
+
+    test_set = pos_tweets_set[:200] + neg_tweets_set[:200]   #Test vs. 300 tweets (400)
+    train_set = pos_tweets_set[200:600] + neg_tweets_set[200:600] #Train vs. 500 tweets (800)
+
+    classifier = NaiveBayesClassifier(train_set)
+    accuracy = classifier.accuracy(test_set)
+    print('Training complete.')
+    print("")
+        
 
 #CREATING DATAFRAME
 try: 
@@ -329,21 +389,23 @@ cleaned_text = ' '.join(cleaned_tokens).lower()
 
 
 #sentiment analysis #https://www.kaggle.com/ankkur13/sentiment-analysis-nlp-wordcloud-textblob
+
 bloblist_desc = list()
 
 tdf_cleaned_string=tdf['cleaned_tweets']
+
 for row in tdf_cleaned_string:
-    blob = TextBlob(row)
-    bloblist_desc.append((row,blob.sentiment.polarity, blob.sentiment.subjectivity))
-    tdf_cleaned_string_desc = pd.DataFrame(bloblist_desc, columns = ['sentence','sentiment','subjectivity']) #renamed polarity to sentiment
+    blob = TextBlob(row, classifier=classifier)
+    bloblist_desc.append((row,blob.sentiment.polarity, blob.sentiment.subjectivity, blob.classify())) ###was blob.classify
+    tdf_cleaned_string_desc = pd.DataFrame(bloblist_desc, columns = ['sentence','sentiment','subjectivity', 'classification'])
  
 def f(tdf_cleaned_string_desc):
-    if tdf_cleaned_string_desc['sentiment'] > 0:
+    if tdf_cleaned_string_desc['classification'] == 'pos':
         val = "Positive"
-    elif tdf_cleaned_string_desc['sentiment'] == 0:
-        val = "Neutral"
-    else:
+    elif tdf_cleaned_string_desc['classification'] == 'neg':
         val = "Negative"
+    else:
+        valt = "Neutral"
     return val
 
 tdf_cleaned_string_desc['sentiment_type'] = tdf_cleaned_string_desc.apply(f, axis=1)
@@ -420,7 +482,7 @@ print("")
 print('-----------------------------------')
 print('-----------------------------------')
 
-# # # # #  C H A R T S  &  E X P O R T S
+# # # #  C H A R T S  &  E X P O R T S
 
 # # # C H A R T S
 
@@ -467,7 +529,7 @@ print('-----------------------------------')
 # tdf_cleaned_string_desc.groupby(['sentiment_type'],as_index=True)['sentence'].count().plot(kind='barh', 
 #                   ax=ax,
 #                   figsize=(10,6), 
-#                   color=['firebrick','black','mediumblue'],
+#                   color=['firebrick','mediumblue','black'],
 #                   alpha=.8
 #                  #ylim=(200,600)                            
 #                  )
@@ -500,7 +562,7 @@ print('-----------------------------------')
 #     pivoted_merged_tdf_sentiments.plot(kind='area', 
 #                       ax=ax,
 #                       figsize=(10,6), 
-#                       color=['firebrick','black','mediumblue'],
+#                       color=['firebrick','mediumblue','black'],
 #                       alpha=.8
 #                      #ylim=(200,600)                            
 #                      )
