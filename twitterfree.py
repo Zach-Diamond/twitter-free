@@ -335,7 +335,7 @@ tdf_cleaned_string=tdf['cleaned_tweets']
 for row in tdf_cleaned_string:
     blob = TextBlob(row)
     bloblist_desc.append((row,blob.sentiment.polarity, blob.sentiment.subjectivity))
-    tdf_cleaned_string_desc = pd.DataFrame(bloblist_desc, columns = ['sentence','sentiment','polarity'])
+    tdf_cleaned_string_desc = pd.DataFrame(bloblist_desc, columns = ['sentence','sentiment','subjectivity']) #renamed polarity to sentiment
  
 def f(tdf_cleaned_string_desc):
     if tdf_cleaned_string_desc['sentiment'] > 0:
@@ -420,8 +420,11 @@ print("")
 print('-----------------------------------')
 print('-----------------------------------')
 
+# # # # #  C H A R T S  &  E X P O R T S
 
-# ## BAR OF TOP 20
+# # # C H A R T S
+
+# ### TOP 20 WORD BAR
 # fig, ax = plt.subplots()
 # top_twenty_words.groupby(['word'])[['count']].sum().sort_values(['count'],ascending=False).plot(kind='bar', 
 #                   ax=ax, 
@@ -449,7 +452,7 @@ print('-----------------------------------')
 # plt.show()
 
 
-# ##WORDCLOUD https://python-graph-gallery.com/260-basic-wordcloud/
+# ###WORDCLOUD https://python-graph-gallery.com/260-basic-wordcloud/
 # wordcloud = WordCloud(width=1000, height=1000, margin=0).generate(cleaned_text)
  
 # # Display the generated image:
@@ -459,12 +462,12 @@ print('-----------------------------------')
 # plt.margins(x=0, y=0)
 # plt.show()
 
-# ## BAR OF SENTIMENTS
+# ### SENTIMENT COUNT BAR CHART
 # fig, ax = plt.subplots()
 # tdf_cleaned_string_desc.groupby(['sentiment_type'],as_index=True)['sentence'].count().plot(kind='barh', 
 #                   ax=ax,
 #                   figsize=(10,6), 
-#                   color=['darkred','black','darkblue'],
+#                   color=['firebrick','black','mediumblue'],
 #                   alpha=.8
 #                  #ylim=(200,600)                            
 #                  )
@@ -484,9 +487,41 @@ print('-----------------------------------')
 # plt.grid(alpha=.35)
 # plt.show()
 
-# ### E X P O R T I N G
+# ###AREA CHART IF MORE THAN 1 DATE
+# if len(tdf['tweet_date'].unique()) > 1:
+#     ###CREATE DFs FOR AREA CHART      
+#     start_merged_tdf_sentiments = pd.merge(tdf,tdf_cleaned_string_desc,left_index=True,right_index=True)
+#     start_merged_tdf_sentiments = start_merged_tdf_sentiments.drop(columns=['id','retweeted', 'reply_to_user', 'liked', 'tweet_day', 'tweet_hour', 'tweet_length', 'tweet_timerange', 'tokenized_tweets', 'cleaned_tweets', 'sentence'])
+#     grouped_merged_tdf_sentiments = start_merged_tdf_sentiments.groupby(['sentiment_type','tweet_date'],as_index=False)[['tweet']].count()
+#     pivoted_merged_tdf_sentiments = grouped_merged_tdf_sentiments.pivot(index='tweet_date', columns='sentiment_type',values='tweet')
 
-# ###EXPORT MULTI-TAB EXCEL FILE
+#     ### AREA OF SENTIMENTS OVER TIME
+#     fig, ax = plt.subplots()
+#     pivoted_merged_tdf_sentiments.plot(kind='area', 
+#                       ax=ax,
+#                       figsize=(10,6), 
+#                       color=['firebrick','black','mediumblue'],
+#                       alpha=.8
+#                      #ylim=(200,600)                            
+#                      )
+
+#     ax.set_title(f'{selected_name}: Tweet Sentiments Over Time',
+#                  size=20)
+
+#     ax.spines['left'].set_position(('outward', 10))
+#     ax.spines['bottom'].set_position(('outward', 10))
+#     ax.spines['right'].set_visible(False)
+#     ax.spines['top'].set_visible(False)
+#     ax.yaxis.set_ticks_position('left')
+#     ax.xaxis.set_ticks_position('bottom')
+#     ax.set_xlabel('Tweet Date',size=12)
+#     plt.yticks(fontsize=13)
+#     plt.xticks(rotation=90,fontsize=12)
+#     plt.grid(alpha=.35)
+#     plt.show()
+
+
+#### E X P O R T   M U L T I - T A B  E X C E L   F I L E 
 # datetimenow = ' '+datetime.now().strftime('%Y-%m-%d %H.%M.%S')
 
 # merged_tdf_sentiments = pd.merge(tdf,tdf_cleaned_string_desc,left_index=True,right_index=True)
@@ -505,7 +540,6 @@ print('-----------------------------------')
 # # Close the Pandas Excel writer and output the Excel file.
 # writer.save()
 
-##################### NOT YET WORKING 
 
 ###EXPORT MULTI-PAGE PDF
 # import matplotlib.backends.backend_pdf
@@ -513,4 +547,3 @@ print('-----------------------------------')
 # for fig in xrange(1, figure().number):
 #     pdf.savefig( fig )
 # pdf.close()
-
