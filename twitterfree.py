@@ -1,27 +1,27 @@
 ### Importing:
-from dotenv import load_dotenv
-from datetime import datetime,date,timedelta
+from dotenv import load_dotenv                      #.env file
+from datetime import datetime,date,timedelta        #Setting dates
 
-import os                 ###Basic 
-import tweepy             ###Found as a simple twitter API
-import pandas as pd       ###Dataframes
-import numpy as np        ###Numbers
-import requests           ###.env file 
-import csv                ###Maybe put in CSV?
+import os                                           ###Interaction with OS 
+import tweepy                                       ###Using Twitter API
+import pandas as pd                                 ###Dataframes
+import numpy as np                                  ###Math
+import requests                                     ###.env file 
+import csv                                          ###For export to CSV
+import xlsxwriter                                   ###Writing mutli-page Excel file
 
-import matplotlib.pyplot as plt  #plotting
-import nltk                      #NLP
-import string
-from nltk.tokenize import word_tokenize
-from nltk.stem.porter import PorterStemmer 
-from nltk.stem.wordnet import WordNetLemmatizer 
-from nltk.tag import pos_tag
-from nltk import FreqDist
-from nltk.corpus import stopwords
-from wordcloud import WordCloud
-from textblob import TextBlob
+import matplotlib.pyplot as plt                     #Plotting
+import nltk                                         #Cleanup of Tweets and beginning NLP
+import string                                       #Punctuatoin
+from nltk.tokenize import word_tokenize             #Cleanup of Tweets
+from nltk.stem.porter import PorterStemmer          #Cleanup of Tweets
+from nltk.stem.wordnet import WordNetLemmatizer     #Cleanup of Tweets
+from nltk.tag import pos_tag                        #Cleanup of Tweets
+from nltk import FreqDist                           #Charting NLP
+from nltk.corpus import stopwords                   #Basic stopwords list to be appended
+from wordcloud import WordCloud                     #Wordcloud chart
+from textblob import TextBlob                       #Sentiment analysis
 import re
-
 
 load_dotenv()
 
@@ -193,7 +193,7 @@ else:
 
     for i in range(10): #Allow 10 retries
         try:
-           tweets = tweepy.Cursor(api.search, q=f'{selected_name} -filter:retweets', tweet_mode='extended', lang='en').items(500)
+           tweets = tweepy.Cursor(api.search, q=f'{selected_name} -filter:retweets', tweet_mode='extended', lang='en').items(200)
         except:
             selected_name = input('Hashtag not found. Please Enter a valid hashtag: ')
         else:
@@ -433,7 +433,7 @@ print('-----------------------------------')
 
 # ax.set_title(f'{selected_name}: Top 20 Words by Frequency',
 #              size=20)
-# # #ax.get_children()[list(ytcatcount.index).index('Entertainment')].set_color('dimgrey')
+# #ax.get_children()[list(ytcatcount.index).index('Entertainment')].set_color('dimgrey')
 
 # # Tufte-like axes
 # ax.spines['left'].set_position(('outward', 10))
@@ -445,7 +445,7 @@ print('-----------------------------------')
 # #ax.set_xlabel('Word Used',size=15) #Disabled
 # plt.yticks(fontsize=14)
 # plt.xticks(rotation=90,fontsize=14)
-#plt.grid(alpha=.4)
+# plt.grid(alpha=.4)
 # plt.show()
 
 
@@ -483,3 +483,34 @@ print('-----------------------------------')
 # plt.xticks(rotation=90,fontsize=12)
 # plt.grid(alpha=.35)
 # plt.show()
+
+# ### E X P O R T I N G
+
+# ###EXPORT MULTI-TAB EXCEL FILE
+# datetimenow = ' '+datetime.now().strftime('%Y-%m-%d %H.%M.%S')
+
+# merged_tdf_sentiments = pd.merge(tdf,tdf_cleaned_string_desc,left_index=True,right_index=True)
+# merged_tdf_sentiments = merged_tdf_sentiments.drop(columns=['id','retweeted', 'reply_to_user', 'liked', 'tweet_date', 'tweet_day', 'tweet_hour', 'tweet_length', 'tweet_timerange', 'tokenized_tweets', 'cleaned_tweets', 'sentence'])
+
+# # Create a Pandas Excel writer using XlsxWriter as the engine.
+# writer = pd.ExcelWriter(f'data/{selected_name} - Excel_Data - {datetimenow}.xlsx', engine='xlsxwriter',options={'remove_timezone': True})
+
+# # Write each dataframe to a different worksheet.
+# tdf.to_excel(writer, sheet_name='All_Tweets_and_Data') #All_Data (without Sentiment)
+# merged_tdf_sentiments.to_excel(writer, sheet_name='Tweets_Plus_Sentment') #Tweets + Sentiments
+# table_most_frequent_day.to_excel(writer, sheet_name='Most_Frequent_Days') #Group by days
+# table_most_frequent_hour.to_excel(writer, sheet_name='Most_Frequent_Hours') #Groupby hours
+# thisweek_tdf.to_excel(writer, sheet_name='This_Week_Tweets') #May be empty if no previous data
+
+# # Close the Pandas Excel writer and output the Excel file.
+# writer.save()
+
+##################### NOT YET WORKING 
+
+###EXPORT MULTI-PAGE PDF
+# import matplotlib.backends.backend_pdf
+# pdf = matplotlib.backends.backend_pdf.PdfPages("output.pdf")
+# for fig in xrange(1, figure().number):
+#     pdf.savefig( fig )
+# pdf.close()
+
