@@ -507,7 +507,7 @@ print('-----------------------------------')
 # ax.spines['top'].set_visible(False)
 # ax.yaxis.set_ticks_position('left')
 # ax.xaxis.set_ticks_position('bottom')
-# #ax.set_xlabel('Word Used',size=15) #Disabled
+# ax.set_xlabel(' ',size=15) #Disabled
 # plt.yticks(fontsize=14)
 # plt.xticks(rotation=90,fontsize=14)
 # plt.grid(alpha=.4)
