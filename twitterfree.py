@@ -113,7 +113,6 @@ def clean_data(tokens, stop_words = ()):  #https://www.sitepoint.com/natural-lan
     return cleaned_tokens
 
 
-
 ########SCRIPT-WIDE VARIABLES
 
 ##SECRET KEYS (.env)
@@ -136,6 +135,7 @@ stemmer = PorterStemmer()
 stop_words = stopwords.words('english')
 # Additional stop_words are appended below (after user-input) following observations
 
+breakpoint()
 
 ###RESULT LISTS
 results=[]
@@ -154,7 +154,7 @@ print('...LEARNING SPANISH...')
 print('---- CONFIGURATION COMPLETE ----')
 print('-----------------------------------')
 
-###CHOOSE LOOKUP TYP
+###CHOOSE LOOKUP TYPE
 viable=['hashtag','user']
 source = input('To begin, please type either HASHTAG or USER: ').lower()
 while source not in viable or len(source)==0:
@@ -220,7 +220,7 @@ print('-----------------------------------')
 
 try: #will try to print the accuracy variable. If fails, forces training. If succeeds, allows you to choose not to retrain.
     accuracy
-    choose_train = input('To retrain Twitter Classifier (~30s), enter YES: ').lower() 
+    choose_train = input('To retrain Tweet Classifier (~30s), enter YES: ').lower() 
 
     if choose_train == 'yes':
         print("Testing and Training Classifier. This may take up to 30 seconds...")
@@ -247,7 +247,7 @@ try: #will try to print the accuracy variable. If fails, forces training. If suc
         print("")
 
 except:
-    print("Testing and Training Classifier. This may take up to 30 seconds...")
+    print("Testing and Training Tweet Classifier. This may take up to 30 seconds...")
     pos_tweets = twitter_samples.strings('positive_tweets.json') #Sample positive Tweets
     neg_tweets = twitter_samples.strings('negative_tweets.json') #Sample negative tweets
 
@@ -491,7 +491,7 @@ print('-----------------------------------')
 # top_twenty_words.groupby(['word'])[['count']].sum().sort_values(['count'],ascending=False).plot(kind='bar', 
 #                   ax=ax, 
 #                   figsize=(10,6), 
-#                   color=['mediumblue','red','pink'],
+#                   color=['darkblue','red','pink'],
 #                   alpha=.8
 #                  #ylim=(200,600)                            
 #                  )
@@ -529,7 +529,7 @@ print('-----------------------------------')
 # tdf_cleaned_string_desc.groupby(['sentiment_type'],as_index=True)['sentence'].count().plot(kind='barh', 
 #                   ax=ax,
 #                   figsize=(10,6), 
-#                   color=['firebrick','mediumblue','black'],
+#                   color=['firebrick','darkblue','black'],
 #                   alpha=.8
 #                  #ylim=(200,600)                            
 #                  )
@@ -562,7 +562,7 @@ print('-----------------------------------')
 #     pivoted_merged_tdf_sentiments.plot(kind='area', 
 #                       ax=ax,
 #                       figsize=(10,6), 
-#                       color=['firebrick','mediumblue','black'],
+#                       color=['firebrick','darkblue','black'],
 #                       alpha=.8
 #                      #ylim=(200,600)                            
 #                      )
