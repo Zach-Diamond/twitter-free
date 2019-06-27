@@ -216,6 +216,7 @@ else:
         
         
 ##########TRAINING & TESTING TWITTER DATA##########
+#REFERENCE: http://blog.chapagain.com.np/python-twitter-sentiment-analysis-using-textblob/
 print('-----------------------------------')
 
 try: #will try to print the accuracy variable. If fails, forces training. If succeeds, allows you to choose not to retrain.
@@ -238,8 +239,8 @@ try: #will try to print the accuracy variable. If fails, forces training. If suc
         shuffle(pos_tweets_set)
         shuffle(neg_tweets_set)
 
-        test_set = pos_tweets_set[:200] + neg_tweets_set[:200]   #Test vs. 300 tweets (400)
-        train_set = pos_tweets_set[200:600] + neg_tweets_set[200:600] #Train vs. 500 tweets (800)
+        test_set = pos_tweets_set[:200] + neg_tweets_set[:200]   #Test vs. 200 tweets (400)
+        train_set = pos_tweets_set[200:600] + neg_tweets_set[200:600] #Train vs. 400 tweets (800)
 
         classifier = NaiveBayesClassifier(train_set)
         accuracy = classifier.accuracy(test_set)
@@ -262,8 +263,8 @@ except:
     shuffle(pos_tweets_set)
     shuffle(neg_tweets_set)
 
-    test_set = pos_tweets_set[:200] + neg_tweets_set[:200]   #Test vs. 300 tweets (400)
-    train_set = pos_tweets_set[200:600] + neg_tweets_set[200:600] #Train vs. 500 tweets (800)
+    test_set = pos_tweets_set[:200] + neg_tweets_set[:200]   #Test vs. 200 tweets (400)
+    train_set = pos_tweets_set[200:600] + neg_tweets_set[200:600] #Train vs. 400 tweets (800)
 
     classifier = NaiveBayesClassifier(train_set)
     accuracy = classifier.accuracy(test_set)
@@ -284,6 +285,7 @@ if len(tdf)<3:
 
 
 print("Number of tweets extracted: {}.\n".format(len(tdf)))
+print('Processing...')
 
 
 ###ADDING COLUMNS FROM TWITTER DATA
@@ -421,6 +423,10 @@ except:
 #append a hashtag if source = hashtag
 if source == 'hashtag':
     selected_name = '#'+selected_name
+
+print('Processing Complete.')
+print("")
+print('-----------------------------------')
 
 ### {# of tweets extracted -> from X to Y [Z Days]}
 if len(thisweek_tdf) > 1:
