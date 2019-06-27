@@ -1,29 +1,29 @@
 ### Importing:
-from dotenv import load_dotenv                      #.env file
-from datetime import datetime,date,timedelta        #Setting dates
+from dotenv import load_dotenv                          #.env file
+from datetime import datetime,date,timedelta            #Setting dates
+import os                                               ###Interaction with OS 
+import tweepy                                           ###Using Twitter API
+import pandas as pd                                     ###Dataframes
+import numpy as np                                      ###Math
+import requests                                         ###.env file 
+import csv                                              ###For export to CSV
+import xlsxwriter                                       ###Writing mutli-page Excel file
+import matplotlib.pyplot as plt                         #Plotting
+import nltk                                             #Cleanup of Tweets and beginning NLP
+import string                                           #Punctuatoin
+from nltk.corpus import twitter_samples                 ###For training wordblob vs. Twitter
+from textblob.classifiers import NaiveBayesClassifier   ### Classifier
+from random import shuffle                              ### To Shuffle tweet tests
+from nltk.tokenize import word_tokenize                 #Cleanup of Tweets
+from nltk.stem.porter import PorterStemmer              #Cleanup of Tweets
+from nltk.stem.wordnet import WordNetLemmatizer         #Cleanup of Tweets
+from nltk.tag import pos_tag                            #Cleanup of Tweets
+from nltk import FreqDist                               #Charting NLP
+from nltk.corpus import stopwords                       #Basic stopwords list to be appended
+from wordcloud import WordCloud                         #Wordcloud chart
+from textblob import TextBlob                           #Sentiment analysis
+from matplotlib.backends.backend_pdf import PdfPages    #Export to multiple PDF pages
 
-import os                                           ###Interaction with OS 
-import tweepy                                       ###Using Twitter API
-import pandas as pd                                 ###Dataframes
-import numpy as np                                  ###Math
-import requests                                     ###.env file 
-import csv                                          ###For export to CSV
-import xlsxwriter                                   ###Writing mutli-page Excel file
-
-import matplotlib.pyplot as plt                     #Plotting
-import nltk                                         #Cleanup of Tweets and beginning NLP
-import string                                       #Punctuatoin
-from nltk.corpus import twitter_samples             ###For training wordblob vs. Twitter
-from textblob.classifiers import NaiveBayesClassifier ### Classifier
-from random import shuffle                          ### To Shuffle tweet tests
-from nltk.tokenize import word_tokenize             #Cleanup of Tweets
-from nltk.stem.porter import PorterStemmer          #Cleanup of Tweets
-from nltk.stem.wordnet import WordNetLemmatizer     #Cleanup of Tweets
-from nltk.tag import pos_tag                        #Cleanup of Tweets
-from nltk import FreqDist                           #Charting NLP
-from nltk.corpus import stopwords                   #Basic stopwords list to be appended
-from wordcloud import WordCloud                     #Wordcloud chart
-from textblob import TextBlob                       #Sentiment analysis
 import re
 
 load_dotenv()
@@ -127,6 +127,8 @@ yesterday = date.today() - timedelta(days=1)
 yesterdaydate = yesterday.strftime('%Y-%m-%d')
 lastweek = date.today() - timedelta(days=7)
 lastweekdate = lastweek.strftime('%Y-%m-%d')
+datetimenow = ' '+datetime.now().strftime('%Y-%m-%d %H.%M.%S')  #Exporting - prevent overlap (seconds)
+smalldate = datetime.today().strftime('%m.%d')                  #Exporting - organize by name
 
 
 ###NLP TEXT CLEANUP
@@ -135,7 +137,6 @@ stemmer = PorterStemmer()
 stop_words = stopwords.words('english')
 # Additional stop_words are appended below (after user-input) following observations
 
-breakpoint()
 
 ###RESULT LISTS
 results=[]
@@ -248,6 +249,8 @@ try: #will try to print the accuracy variable. If fails, forces training. If suc
         print("")
 
 except:
+    #Trying to save the train/test between runs to keep runtime down... https://stackoverflow.com/questions/6568007/how-do-i-save-and-restore-multiple-variables-in-python
+
     print("Testing and Training Tweet Classifier. This may take up to 30 seconds...")
     pos_tweets = twitter_samples.strings('positive_tweets.json') #Sample positive Tweets
     neg_tweets = twitter_samples.strings('negative_tweets.json') #Sample negative tweets
@@ -269,8 +272,7 @@ except:
     classifier = NaiveBayesClassifier(train_set)
     accuracy = classifier.accuracy(test_set)
     print('Training complete.')
-    print("")
-        
+    print("")    
 
 #CREATING DATAFRAME
 try: 
@@ -488,130 +490,130 @@ print("")
 print('-----------------------------------')
 print('-----------------------------------')
 
-# # # #  C H A R T S  &  E X P O R T S
+print('')
+print('Creating Charts and saving outputs...')
+# # #  C H A R T S  &  E X P O R T S
 
-# # # C H A R T S
+### E X P O R T   M U L T I - T A B  E X C E L   F I L E 
+merged_tdf_sentiments = pd.merge(tdf,tdf_cleaned_string_desc,left_index=True,right_index=True)
+merged_tdf_sentiments = merged_tdf_sentiments.drop(columns=['id','retweeted', 'reply_to_user', 'liked', 'tweet_date', 'tweet_day', 'tweet_hour', 'tweet_length', 'tweet_timerange', 'tokenized_tweets', 'cleaned_tweets', 'sentence'])
 
-# ### TOP 20 WORD BAR
-# fig, ax = plt.subplots()
-# top_twenty_words.groupby(['word'])[['count']].sum().sort_values(['count'],ascending=False).plot(kind='bar', 
-#                   ax=ax, 
-#                   figsize=(10,6), 
-#                   color=['darkblue','red','pink'],
-#                   alpha=.8
-#                  #ylim=(200,600)                            
-#                  )
+# Create a Pandas Excel writer using XlsxWriter as the engine.
+writer = pd.ExcelWriter(f'data/{smalldate}_{selected_name}_DATA_{datetimenow}.xlsx', engine='xlsxwriter',options={'remove_timezone': True})
 
-# ax.set_title(f'{selected_name}: Top 20 Words by Frequency',
-#              size=20)
-# #ax.get_children()[list(ytcatcount.index).index('Entertainment')].set_color('dimgrey')
+# Write each dataframe to a different worksheet.
+tdf.to_excel(writer, sheet_name='All_Tweets_and_Data') #All_Data (without Sentiment)
+merged_tdf_sentiments.to_excel(writer, sheet_name='Tweets_Plus_Sentment') #Tweets + Sentiments
+table_most_frequent_day.to_excel(writer, sheet_name='Most_Frequent_Days') #Group by days
+table_most_frequent_hour.to_excel(writer, sheet_name='Most_Frequent_Hours') #Groupby hours
+thisweek_tdf.to_excel(writer, sheet_name='This_Week_Tweets') #May be empty if no previous data
 
-# # Tufte-like axes
-# ax.spines['left'].set_position(('outward', 10))
-# ax.spines['bottom'].set_position(('outward', 10))
-# ax.spines['right'].set_visible(False)
-# ax.spines['top'].set_visible(False)
-# ax.yaxis.set_ticks_position('left')
-# ax.xaxis.set_ticks_position('bottom')
-# ax.set_xlabel(' ',size=15) #Disabled
-# plt.yticks(fontsize=14)
-# plt.xticks(rotation=90,fontsize=14)
-# plt.grid(alpha=.4)
-# plt.show()
+# Close the Pandas Excel writer and output the Excel file.
+writer.save()
 
+# # # C R E A T E  & E X P O R T  C H A R T S
 
-# ###WORDCLOUD https://python-graph-gallery.com/260-basic-wordcloud/
-# wordcloud = WordCloud(width=1000, height=1000, margin=0).generate(cleaned_text)
- 
-# # Display the generated image:
-# plt.figure( figsize=(20,10) )
-# plt.imshow(wordcloud, interpolation='bilinear')
-# plt.axis("off")
-# plt.margins(x=0, y=0)
-# plt.show()
+with PdfPages(f'data/{smalldate}_{selected_name}_PDF_{datetimenow}.pdf') as pdf:
 
-# ### SENTIMENT COUNT BAR CHART
-# fig, ax = plt.subplots()
-# tdf_cleaned_string_desc.groupby(['sentiment_type'],as_index=True)['sentence'].count().plot(kind='barh', 
-#                   ax=ax,
-#                   figsize=(10,6), 
-#                   color=['firebrick','darkblue','black'],
-#                   alpha=.8
-#                  #ylim=(200,600)                            
-#                  )
+    ### TOP 20 WORD BAR
+    fig, ax = plt.subplots()
+    top_twenty_words.groupby(['word'])[['count']].sum().sort_values(['count'],ascending=False).plot(kind='bar', 
+                    ax=ax, 
+                    figsize=(8,6), 
+                    color=['darkblue','red','pink'],
+                    alpha=.8
+                    #ylim=(200,600)                            
+                    )
 
-# ax.set_title(f'{selected_name}: Count of Tweet Sentiments',
-#              size=20)
+    ax.set_title(f'{selected_name}: Top 20 Words by Frequency',
+                size=20)
+    #ax.get_children()[list(ytcatcount.index).index('Entertainment')].set_color('dimgrey')
 
-# ax.spines['left'].set_position(('outward', 10))
-# ax.spines['bottom'].set_position(('outward', 10))
-# ax.spines['right'].set_visible(False)
-# ax.spines['top'].set_visible(False)
-# ax.yaxis.set_ticks_position('left')
-# ax.xaxis.set_ticks_position('bottom')
-# ax.set_ylabel('Sentiment',size=12)
-# plt.yticks(fontsize=13)
-# plt.xticks(rotation=90,fontsize=12)
-# plt.grid(alpha=.35)
-# plt.show()
+    # Tufte-like axes
+    ax.spines['left'].set_position(('outward', 10))
+    ax.spines['bottom'].set_position(('outward', 10))
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+    ax.yaxis.set_ticks_position('left')
+    ax.xaxis.set_ticks_position('bottom')
+    ax.set_xlabel(' ',size=15) #Disabled
+    plt.yticks(fontsize=14)
+    plt.xticks(rotation=90,fontsize=14)
+    plt.grid(alpha=.4)
+    pdf.savefig()  
+    plt.show()
 
-# ###AREA CHART IF MORE THAN 1 DATE
-# if len(tdf['tweet_date'].unique()) > 1:
-#     ###CREATE DFs FOR AREA CHART      
-#     start_merged_tdf_sentiments = pd.merge(tdf,tdf_cleaned_string_desc,left_index=True,right_index=True)
-#     start_merged_tdf_sentiments = start_merged_tdf_sentiments.drop(columns=['id','retweeted', 'reply_to_user', 'liked', 'tweet_day', 'tweet_hour', 'tweet_length', 'tweet_timerange', 'tokenized_tweets', 'cleaned_tweets', 'sentence'])
-#     grouped_merged_tdf_sentiments = start_merged_tdf_sentiments.groupby(['sentiment_type','tweet_date'],as_index=False)[['tweet']].count()
-#     pivoted_merged_tdf_sentiments = grouped_merged_tdf_sentiments.pivot(index='tweet_date', columns='sentiment_type',values='tweet')
+    ###WORDCLOUD https://python-graph-gallery.com/260-basic-wordcloud/
+    wordcloud = WordCloud(width=1000, height=1000, margin=0).generate(cleaned_text)
+    
+    # Display the generated image:
+    plt.figure( figsize=(20,10) )
+    plt.imshow(wordcloud, interpolation='bilinear')
+    plt.axis("off")
+    plt.margins(x=0, y=0)
+    plt.title(f'{selected_name} Wordcloud', fontsize=20)
+    pdf.savefig() 
+    plt.show()
 
-#     ### AREA OF SENTIMENTS OVER TIME
-#     fig, ax = plt.subplots()
-#     pivoted_merged_tdf_sentiments.plot(kind='area', 
-#                       ax=ax,
-#                       figsize=(10,6), 
-#                       color=['firebrick','darkblue','black'],
-#                       alpha=.8
-#                      #ylim=(200,600)                            
-#                      )
+    ### SENTIMENT COUNT BAR CHART
+    fig, ax = plt.subplots()
+    tdf_cleaned_string_desc.groupby(['sentiment_type'],as_index=True)['sentence'].count().plot(kind='barh', 
+                    ax=ax,
+                    figsize=(10,6), 
+                    color=['firebrick','darkblue','black'],
+                    alpha=.8
+                    #ylim=(200,600)                            
+                    )
 
-#     ax.set_title(f'{selected_name}: Tweet Sentiments Over Time',
-#                  size=20)
+    ax.set_title(f'{selected_name}: Count of Tweet Sentiments',
+                size=20)
 
-#     ax.spines['left'].set_position(('outward', 10))
-#     ax.spines['bottom'].set_position(('outward', 10))
-#     ax.spines['right'].set_visible(False)
-#     ax.spines['top'].set_visible(False)
-#     ax.yaxis.set_ticks_position('left')
-#     ax.xaxis.set_ticks_position('bottom')
-#     ax.set_xlabel('Tweet Date',size=12)
-#     plt.yticks(fontsize=13)
-#     plt.xticks(rotation=90,fontsize=12)
-#     plt.grid(alpha=.35)
-#     plt.show()
+    ax.spines['left'].set_position(('outward', 10))
+    ax.spines['bottom'].set_position(('outward', 10))
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+    ax.yaxis.set_ticks_position('left')
+    ax.xaxis.set_ticks_position('bottom')
+    ax.set_ylabel('Sentiment',size=12)
+    plt.yticks(fontsize=13)
+    plt.xticks(rotation=90,fontsize=12)
+    plt.grid(alpha=.35)
+    pdf.savefig()
+    plt.show()
 
+    ###AREA CHART IF MORE THAN 1 DATE
+    if len(tdf['tweet_date'].unique()) > 1:
+        ###CREATE DFs FOR AREA CHART      
+        start_merged_tdf_sentiments = pd.merge(tdf,tdf_cleaned_string_desc,left_index=True,right_index=True)
+        start_merged_tdf_sentiments = start_merged_tdf_sentiments.drop(columns=['id','retweeted', 'reply_to_user', 'liked', 'tweet_day', 'tweet_hour', 'tweet_length', 'tweet_timerange', 'tokenized_tweets', 'cleaned_tweets', 'sentence'])
+        grouped_merged_tdf_sentiments = start_merged_tdf_sentiments.groupby(['sentiment_type','tweet_date'],as_index=False)[['tweet']].count()
+        pivoted_merged_tdf_sentiments = grouped_merged_tdf_sentiments.pivot(index='tweet_date', columns='sentiment_type',values='tweet')
 
-#### E X P O R T   M U L T I - T A B  E X C E L   F I L E 
-# datetimenow = ' '+datetime.now().strftime('%Y-%m-%d %H.%M.%S')
+        ### AREA OF SENTIMENTS OVER TIME
+        fig, ax = plt.subplots()
+        pivoted_merged_tdf_sentiments.plot(kind='area', 
+                        ax=ax,
+                        figsize=(10,6), 
+                        color=['firebrick','darkblue','black'],
+                        alpha=.8
+                        #ylim=(200,600)                            
+                        )
 
-# merged_tdf_sentiments = pd.merge(tdf,tdf_cleaned_string_desc,left_index=True,right_index=True)
-# merged_tdf_sentiments = merged_tdf_sentiments.drop(columns=['id','retweeted', 'reply_to_user', 'liked', 'tweet_date', 'tweet_day', 'tweet_hour', 'tweet_length', 'tweet_timerange', 'tokenized_tweets', 'cleaned_tweets', 'sentence'])
+        ax.set_title(f'{selected_name}: Tweet Sentiments Over Time',
+                    size=20)
 
-# # Create a Pandas Excel writer using XlsxWriter as the engine.
-# writer = pd.ExcelWriter(f'data/{selected_name} - Excel_Data - {datetimenow}.xlsx', engine='xlsxwriter',options={'remove_timezone': True})
-
-# # Write each dataframe to a different worksheet.
-# tdf.to_excel(writer, sheet_name='All_Tweets_and_Data') #All_Data (without Sentiment)
-# merged_tdf_sentiments.to_excel(writer, sheet_name='Tweets_Plus_Sentment') #Tweets + Sentiments
-# table_most_frequent_day.to_excel(writer, sheet_name='Most_Frequent_Days') #Group by days
-# table_most_frequent_hour.to_excel(writer, sheet_name='Most_Frequent_Hours') #Groupby hours
-# thisweek_tdf.to_excel(writer, sheet_name='This_Week_Tweets') #May be empty if no previous data
-
-# # Close the Pandas Excel writer and output the Excel file.
-# writer.save()
-
-
-###EXPORT MULTI-PAGE PDF
-# import matplotlib.backends.backend_pdf
-# pdf = matplotlib.backends.backend_pdf.PdfPages("output.pdf")
-# for fig in xrange(1, figure().number):
-#     pdf.savefig( fig )
-# pdf.close()
+        ax.spines['left'].set_position(('outward', 10))
+        ax.spines['bottom'].set_position(('outward', 10))
+        ax.spines['right'].set_visible(False)
+        ax.spines['top'].set_visible(False)
+        ax.yaxis.set_ticks_position('left')
+        ax.xaxis.set_ticks_position('bottom')
+        ax.set_xlabel('Tweet Date',size=12)
+        plt.yticks(fontsize=13)
+        plt.xticks(rotation=90,fontsize=12)
+        plt.grid(alpha=.35)
+        pdf.savefig()
+        plt.show()
+print('A .PDF and .XLSX file have been successfully saved locally to the ".../data" folder.')
+print('Adios!')
+print('-----------------------------------')
