@@ -1,4 +1,4 @@
-### Importing:
+### PACKAGES
 from dotenv import load_dotenv                          #.env file
 from datetime import datetime,date,timedelta            #Setting dates
 import os                                               ###Interaction with OS 
@@ -6,11 +6,11 @@ import tweepy                                           ###Using Twitter API
 import pandas as pd                                     ###Dataframes
 import numpy as np                                      ###Math
 import requests                                         ###.env file 
-import csv                                              ###For export to CSV
 import xlsxwriter                                       ###Writing mutli-page Excel file
 import matplotlib.pyplot as plt                         #Plotting
 import nltk                                             #Cleanup of Tweets and beginning NLP
-import string                                           #Punctuatoin
+import string                                           #Punctuation
+import re                                               #Regex
 from nltk.corpus import twitter_samples                 ###For training wordblob vs. Twitter
 from textblob.classifiers import NaiveBayesClassifier   ### Classifier
 from random import shuffle                              ### To Shuffle tweet tests
@@ -24,16 +24,13 @@ from wordcloud import WordCloud                         #Wordcloud chart
 from textblob import TextBlob                           #Sentiment analysis
 from matplotlib.backends.backend_pdf import PdfPages    #Export to multiple PDF pages
 
-import re
-
 load_dotenv()
 
-###FUNCTIONS
+### FUNCTIONS
 def add_commas(my_number):
     return "{:,}".format(my_number)
 
-#Annoying hour timerange classifier - had to make super long because couldn't figure out >=/<= issue in pandas dtype
-#https://stackoverflow.com/questions/30953299/pandas-if-row-in-column-a-contains-x-write-y-to-row-in-column-b
+#Annoying hour timerange function - had to make each individual hour Pandas dtype wasn't properly formatting | https://stackoverflow.com/questions/30953299/pandas-if-row-in-column-a-contains-x-write-y-to-row-in-column-b
 def applyFunc(hourposted):
     if hourposted == 0:
         return 'Late Night'
@@ -249,7 +246,6 @@ try: #will try to print the accuracy variable. If fails, forces training. If suc
         print("")
 
 except:
-    #Trying to save the train/test between runs to keep runtime down... https://stackoverflow.com/questions/6568007/how-do-i-save-and-restore-multiple-variables-in-python
 
     print("Testing and Training Tweet Classifier. This may take up to 30 seconds...")
     pos_tweets = twitter_samples.strings('positive_tweets.json') #Sample positive Tweets
@@ -274,7 +270,7 @@ except:
     print('Training complete.')
     print("")    
 
-#CREATING DATAFRAME
+#CREATING INITIAL DATAFRAME
 try: 
     tdf = pd.DataFrame(results)
 except: 
@@ -614,6 +610,8 @@ with PdfPages(f'data/{smalldate}_{selected_name}_PDF_{datetimenow}.pdf') as pdf:
         plt.grid(alpha=.35)
         pdf.savefig()
         plt.show()
-print('A .PDF and .XLSX file have been successfully saved locally to the ".../data" folder.')
+print('All files have been successfully saved locally to the ".../data" folder.')
 print('Adios!')
-print('-----------------------------------')
+print("")
+print('***********************************')
+print('***********************************')

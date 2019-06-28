@@ -1,16 +1,20 @@
 requests
 python-dotenv
+datetime
 numpy
 pandas
 tweepy
 matplotlib
 seaborn
-Textblob
+textblob
 wordcloud
 xlsxwriter
+string
+random
 nltk==3.4
 #python -m nltk.downloader all or, individually:
 nltk.download('punkt')
 nltk.download('stopwords')
 nltk.download('wordnet')
 nltk.download('averaged_perceptron_tagger')
+re
