@@ -310,6 +310,11 @@ else:
     8:"tweeted_at"}
     , axis='columns')
 
+#Append more stop_words for distribution
+stop_words.append(f"{selected_name.lower()}")
+other_stop_words = ['rt',"..." , "http", "'", "...", '"' '"' "rt", "amp", '”', '“', "'s", "''", "n't", 'n"t', '’', '', '``', "get", "go", "https", "''",'co','.co','co','‘','//t.co/']
+stop_words = stop_words+other_stop_words
+
 #Additional columns
 #Convert tweeted_at to Eastern
 tdf['tweeted_at'] = tdf['tweeted_at'].dt.tz_localize('UTC')
@@ -373,11 +378,6 @@ text = ' '.join(tdf['tweet'].tolist()).lower()
 thisweek_text = ' '.join(thisweek_tdf['tweet'].tolist()).lower()
 
 ####NLP ADDITIONAL WORDS AND CLEANING
-
-#Append more stop_words for distribution
-stop_words.append(f"{selected_name.lower()}")
-other_stop_words = ['rt',"..." , "http", "'", "...", '"' '"' "rt", "amp", '”', '“', "'s", "''", "n't", 'n"t', '’', '', '``', "get", "go", "https", "''",'co','.co','co','‘','//t.co/']
-stop_words = stop_words+other_stop_words
 
 #NLP Cleaning
 tokens = word_tokenize(text)
@@ -456,6 +456,16 @@ print('-----------------------------------')
 print("")
 print(f"Most Frequent Day to Tweet: {most_frequent_day}")
 print("")
+###Inserting the thousands seperator apply here so as not to affect calculations above (not used after below)
+try:
+    table_most_frequent_day['likes'] = table_most_frequent_day['likes'].apply(lambda x : "{:,}".format(x))
+except:
+    pass
+try: 
+    table_most_frequent_day['retweet_count'] = table_most_frequent_day['retweet_count'].apply(lambda x : "{:,}".format(x))
+except:
+    pass 
+
 print(table_most_frequent_day.to_string(index=False)) ## Remove to_string for DF
 print("")
 print('-----------------------------------')
@@ -536,6 +546,7 @@ with PdfPages(f'data/{smalldate}_{selected_name}_PDF_{datetimenow}.pdf') as pdf:
     plt.yticks(fontsize=14)
     plt.xticks(rotation=90,fontsize=14)
     plt.grid(alpha=.4)
+    plt.tight_layout()
     pdf.savefig()  
     plt.show()
 
@@ -548,6 +559,7 @@ with PdfPages(f'data/{smalldate}_{selected_name}_PDF_{datetimenow}.pdf') as pdf:
     plt.axis("off")
     plt.margins(x=0, y=0)
     plt.title(f'{selected_name} Wordcloud', fontsize=20)
+    plt.tight_layout()
     pdf.savefig() 
     plt.show()
 
@@ -574,6 +586,7 @@ with PdfPages(f'data/{smalldate}_{selected_name}_PDF_{datetimenow}.pdf') as pdf:
     plt.yticks(fontsize=13)
     plt.xticks(rotation=90,fontsize=12)
     plt.grid(alpha=.35)
+    plt.tight_layout()
     pdf.savefig()
     plt.show()
 
@@ -607,11 +620,11 @@ with PdfPages(f'data/{smalldate}_{selected_name}_PDF_{datetimenow}.pdf') as pdf:
         ax.set_xlabel('Tweet Date',size=12)
         plt.yticks(fontsize=13)
         plt.xticks(rotation=90,fontsize=12)
+        plt.tight_layout()
         plt.grid(alpha=.35)
         pdf.savefig()
         plt.show()
 print('All files have been successfully saved locally to the ".../data" folder.')
 print('Adios!')
 print("")
-print('***********************************')
 print('***********************************')
