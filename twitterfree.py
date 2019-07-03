@@ -533,7 +533,6 @@ thisweek_tdf.to_excel(writer, sheet_name='This_Week_Tweets') #May be empty if no
 writer.save()
 
 # # # C R E A T E  & E X P O R T  C H A R T S
-
 with PdfPages(f'data/{smalldate}_{selected_name}_PDF_{datetimenow}.pdf') as pdf:
 
     ### TOP 20 WORD BAR
