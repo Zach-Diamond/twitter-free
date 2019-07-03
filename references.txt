@@ -4,5 +4,6 @@ INITIAL REFERENCES:
     Function for Conditional Pandas df Column: https://stackoverflow.com/questions/30953299/pandas-if-row-in-column-a-contains-x-write-y-to-row-in-column-b
     Simple Natural Language Processing Tutorial: https://www.sitepoint.com/natural-language-processing-python/
     WordClouds: https://www.kaggle.com/ankkur13/sentiment-analysis-nlp-wordcloud-textblob
+    Additional WordCloud support: https://python-graph-gallery.com/260-basic-wordcloud/
     Twitter Sentiment Analysis using Textblob: http://blog.chapagain.com.np/python-twitter-sentiment-analysis-using-textblob/
-    
+    Retry Requests After Exception Up to X Times: https://stackoverflow.com/questions/2083987/how-to-retry-after-exception
