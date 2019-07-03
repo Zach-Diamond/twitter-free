@@ -19,4 +19,4 @@ Other than a connection to the Internet, Python (Anaconda package in order to fo
 ## Data Directory
 Upon running this script, a folder in your installation directory will be created called ".../data/," in which script exports will be stored (.PDF file of charts and .XLSX file of pulled data [5 tabs]). You may freely delete its contents without affecting the script. 
 
-*Note: The charts/data will be automatically exported after each run. To disable, simply comment out all code beginning on line 495 ("CHARTS & EXPORTS"). That will have no adverse impact on the script, but will prevent any data being saved locally.*
+*Note: The charts/data will be automatically exported after each run. To disable, simply comment out all code beginning on line 516 ("CHARTS & EXPORTS"). That will have no adverse impact on the script, but will prevent any data being saved locally.*
