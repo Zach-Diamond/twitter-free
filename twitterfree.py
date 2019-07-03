@@ -405,10 +405,25 @@ def f(tdf_cleaned_string_desc):
     elif tdf_cleaned_string_desc['classification'] == 'neg':
         val = "Negative"
     else:
-        valt = "Neutral"
+        val = "Neutral"
     return val
 
+#Adding in an override because I'm noticing high sentiment is being mislabeled
+
+def nf(tdf_cleaned_string_desc):
+    if tdf_cleaned_string_desc['sentiment'] >= .55:
+        valn = "Positive"
+    elif tdf_cleaned_string_desc['sentiment'] == 0:
+        valn = "Neutral"
+    elif tdf_cleaned_string_desc['sentiment'] <= -.55:
+        valn = "Negative"
+    else:
+        valn = tdf_cleaned_string_desc['sentiment_type']
+    return valn
+
+
 tdf_cleaned_string_desc['sentiment_type'] = tdf_cleaned_string_desc.apply(f, axis=1)
+tdf_cleaned_string_desc['sentiment_type'] = tdf_cleaned_string_desc.apply(nf, axis=1)
 tdf_sentiments = tdf_cleaned_string_desc.groupby(['sentiment_type'],as_index=False)['sentence'].count()
 tdf_sentiments = tdf_sentiments.rename({'sentence':'count'},axis='columns').sort_values('count',ascending=False).reset_index(drop=True)
 try: 
@@ -525,7 +540,7 @@ with PdfPages(f'data/{smalldate}_{selected_name}_PDF_{datetimenow}.pdf') as pdf:
     fig, ax = plt.subplots()
     top_twenty_words.groupby(['word'])[['count']].sum().sort_values(['count'],ascending=False).plot(kind='bar', 
                     ax=ax, 
-                    figsize=(8,6), 
+                    figsize=(10,6), 
                     color=['darkblue','red','pink'],
                     alpha=.8
                     #ylim=(200,600)                            
@@ -554,7 +569,7 @@ with PdfPages(f'data/{smalldate}_{selected_name}_PDF_{datetimenow}.pdf') as pdf:
     wordcloud = WordCloud(width=1000, height=1000, margin=0).generate(cleaned_text)
     
     # Display the generated image:
-    plt.figure( figsize=(20,10) )
+    plt.figure( figsize=(10,6) )
     plt.imshow(wordcloud, interpolation='bilinear')
     plt.axis("off")
     plt.margins(x=0, y=0)
@@ -568,7 +583,7 @@ with PdfPages(f'data/{smalldate}_{selected_name}_PDF_{datetimenow}.pdf') as pdf:
     tdf_cleaned_string_desc.groupby(['sentiment_type'],as_index=True)['sentence'].count().plot(kind='barh', 
                     ax=ax,
                     figsize=(10,6), 
-                    color=['firebrick','darkblue','black'],
+                    color=['firebrick','black','darkblue'],
                     alpha=.8
                     #ylim=(200,600)                            
                     )
@@ -603,7 +618,7 @@ with PdfPages(f'data/{smalldate}_{selected_name}_PDF_{datetimenow}.pdf') as pdf:
         pivoted_merged_tdf_sentiments.plot(kind='area', 
                         ax=ax,
                         figsize=(10,6), 
-                        color=['firebrick','darkblue','black'],
+                        color=['firebrick','black','darkblue'],
                         alpha=.8
                         #ylim=(200,600)                            
                         )
