@@ -8,7 +8,9 @@ Hello! Welcome to my project. In this tool, we'll take your input (either a User
  3. Create the Twitter environment: **conda create -n env-twitterfree python=3.7 #**
  4. Activate the Twitter environment: **conda activate env-twitterfree**
  5. Install the required packages: **pip install -r requirements.txt** *(Note: if you encounter any issues of missing packages, please review list of imports at top of twitterfree.py script and ensure all are installed.)*
- 6. Run the script: **python twitterfree.py** (that's it, you're done!)
+ 6. Create a .env file with your Twitter API credentials (if you do not yet have one, apply at https://developer.twitter.com/). Variables are: CONSUMER_KEY, CONSUMER_SECRET, API_TOKEN, API_SECRET. 
+ 7. Run the script: **python twitterfree.py** (that's it, you're done!)
+ 
  
 ## Requirements
 
